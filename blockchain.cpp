@@ -3,9 +3,11 @@
 #include <iostream>
 #include <cstdlib>
 
+//two prime numbers used for ZKP, very large in practice
 static const int P = 7057;
 static const int G = 5;
 
+// marks the starting block of the blockchain.
 Blockchain::Blockchain() {
     Block genesis(0, 0, 0, "system", 0);
     chain.push_back(genesis);
@@ -66,13 +68,24 @@ bool Blockchain::createBlock(const std::string &creatorID, const std::string &co
 */
 bool Blockchain::verifyOwnership(const std::string &creatorID,
                                  const std::string &content) {
-    if (!users.count(creatorID)) return false;
+    if (!users.count(creatorID)) {
+        std::cout << "Verification failed: user not registered.\n";
+        return false;
+    }
 
     unsigned long ipHash = djb2Hash(content);
-    if (!ipRegistry.count(ipHash) || ipRegistry[ipHash] != creatorID)
-        return false;
 
-    User &u = users[creatorID];
+    if (!ipRegistry.count(ipHash)) {
+        std::cout << "Verification failed: content is not registered on the blockchain.\n";
+        return false;
+    }
+
+    if (ipRegistry[ipHash] != creatorID) {
+        std::cout << "Verification failed: content is owned by another user.\n";
+        return false;
+    }
+
+    User &u = users.at(creatorID);
 
     int r = rand() % (P - 1);
     int h = modExp(G, r, P);
@@ -88,9 +101,11 @@ bool Blockchain::verifyOwnership(const std::string &creatorID,
         return true;
     }
 
-    std::cout << "ZKP verification failed.\n";
+    std::cout << "ZKP verification failed: cryptographic proof mismatch.\n";
     return false;
 }
+
+
 
 void Blockchain::viewChain() {
     for (const auto &b : chain) {
