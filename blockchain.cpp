@@ -3,9 +3,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 using json = nlohmann::json;
-
 
 using namespace std;
 

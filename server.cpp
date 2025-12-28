@@ -1,9 +1,12 @@
 #define _WIN32_WINNT 0x0A00
+
 #include "httplib.h"
 #include "blockchain.h"
-#include <nlohmann/json.hpp>
+#include "json.hpp"
+#include <iostream>
 
 using json = nlohmann::json;
+using namespace std;
 
 int main() {
     Blockchain blockchain;
@@ -11,43 +14,90 @@ int main() {
 
     // Health check
     svr.Get("/health", [](const httplib::Request&, httplib::Response& res) {
-        res.set_content("{\"status\":\"ok\"}", "application/json");
+        res.set_content(R"({"status":"ok"})", "application/json");
     });
 
-    // Register user
-    svr.Post("/register", [&](const httplib::Request& req, httplib::Response& res) {
-        auto body = json::parse(req.body);
-        bool ok = blockchain.registerUser(body["user_id"]);
-        res.set_content(
-            ok ? "{\"status\":\"registered\"}" : "{\"error\":\"user_exists\"}",
-            "application/json"
-        );
-    });
-
-    // Create block
-    svr.Post("/create", [&](const httplib::Request& req, httplib::Response& res) {
-        auto body = json::parse(req.body);
-        bool ok = blockchain.createBlock(body["user_id"], body["content"]);
-        res.set_content(
-            ok ? "{\"status\":\"block_created\"}" : "{\"error\":\"failed\"}",
-            "application/json"
-        );
-    });
-
-    // Verify ownership
-    svr.Post("/verify", [&](const httplib::Request& req, httplib::Response& res) {
-        auto body = json::parse(req.body);
-        bool verified = blockchain.verifyOwnership(body["user_id"], body["content"]);
-        res.set_content(
-            json({{"verified", verified}}).dump(),
-            "application/json"
-        );
-    });
-
-    // View chain
+    // Export blockchain
     svr.Get("/chain", [&](const httplib::Request&, httplib::Response& res) {
         res.set_content(blockchain.exportChainJSON(), "application/json");
     });
 
+    // Register user
+    svr.Post("/register", [&](const httplib::Request& req, httplib::Response& res) {
+        try {
+            json body = json::parse(req.body);
+
+            if (!body.contains("userID")) {
+                res.status = 400;
+                return;
+            }
+
+            bool ok = blockchain.registerUser(body["userID"]);
+
+            json response;
+            response["success"] = ok;
+
+            if (!ok) res.status = 409;
+
+            res.set_content(response.dump(), "application/json");
+        }
+        catch (...) {
+            res.status = 400;
+        }
+    });
+
+    // Create block
+    svr.Post("/create", [&](const httplib::Request& req, httplib::Response& res) {
+        try {
+            json body = json::parse(req.body);
+
+            if (!body.contains("creator") || !body.contains("content")) {
+                res.status = 400;
+                return;
+            }
+
+            bool ok = blockchain.createBlock(
+                body["creator"],
+                body["content"]
+            );
+
+            json response;
+            response["success"] = ok;
+
+            if (!ok) res.status = 409;
+
+            res.set_content(response.dump(), "application/json");
+        }
+        catch (...) {
+            res.status = 400;
+        }
+    });
+
+    // Verify ownership
+    svr.Post("/verify", [&](const httplib::Request& req, httplib::Response& res) {
+        try {
+            json body = json::parse(req.body);
+
+            if (!body.contains("creator") || !body.contains("content")) {
+                res.status = 400;
+                return;
+            }
+
+            bool valid = blockchain.verifyOwnership(
+                body["creator"],
+                body["content"]
+            );
+
+            json response;
+            response["valid"] = valid;
+
+            res.set_content(response.dump(), "application/json");
+        }
+        catch (...) {
+            res.status = 400;
+        }
+    });
+
+    cout << "Server running at http://localhost:18080\n";
     svr.listen("0.0.0.0", 18080);
 }
