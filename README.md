@@ -244,7 +244,7 @@ This project demonstrates:
 * Cryptographic protocol implementation in C++
 
 ---
-## FootNotes ()
+## FootNotes
 * user.h and user.cpp added for architecture purposes, can be used to independently add or update the user info on the block.
 
 * the ZKP proof is just proof of concept and not cryptographically strong to implement to the real world.(small prime numbers used)
