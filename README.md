@@ -1,252 +1,172 @@
-# Blockchain-Based IP Ownership Verification System  
+# Blockchain-Based IP Ownership Verification System
 ### Using Zero-Knowledge Proofs (Schnorr Protocol)
 
+---
+
 ## Abstract
-This project implements a **C++-based blockchain system** for registering and verifying ownership of digital intellectual property (IP) using **Zero-Knowledge Proofs (ZKP)**. The system enables users to prove ownership of registered content **without revealing private keys or original data**, ensuring privacy, integrity, and tamper resistance.
 
-The implementation combines:
-- A custom blockchain ledger
-- Cryptographic hash-based IP registration
-- Schnorr-style Zero-Knowledge Proofs for ownership verification
-- Efficient duplicate detection and user authentication
+This project implements a **C++-based blockchain-backed system** for registering and verifying ownership of digital intellectual property (IP) using **Zero-Knowledge Proofs (ZKP)**. The system allows users to prove ownership of registered content **without revealing private keys or original content**, ensuring privacy, integrity, and tamper resistance.
 
-This project is designed as a **secure, extensible prototype** suitable for academic research and real-world system evolution.
+The current implementation extends beyond a CLI prototype and provides a **fully functional REST API backend**, enabling programmatic interaction, JSON-based blockchain export, and seamless integration with future frontends.
+
+This project is designed as a **secure, extensible prototype** suitable for academic research, cryptography demonstrations, and real-world system evolution.
 
 ---
 
 ## Key Objectives
-- Provide cryptographic proof of ownership for digital content
-- Prevent duplicate IP registration across users
-- Maintain a tamper-evident ledger of ownership claims
-- Verify ownership without revealing sensitive information
-- Demonstrate practical application of Zero-Knowledge Proofs
+
+* Provide cryptographic proof of ownership for digital content
+* Prevent duplicate IP registration across users
+* Maintain a tamper-evident blockchain ledger
+* Verify ownership without revealing sensitive information
+* Demonstrate practical application of Zero-Knowledge Proofs
+* Expose system functionality via a RESTful API
 
 ---
 
 ## System Architecture
 
 ### Core Components
-- **Blockchain Ledger**  
-  Stores immutable records of registered IP hashes linked via cryptographic hashes.
-  
-- **User Identity System**  
-  Each user possesses a cryptographic key pair (private/public).
 
-- **Zero-Knowledge Proof Engine**  
-  Implements a Schnorr-based challenge-response protocol to prove ownership.
-
-- **Duplicate IP Registry**  
-  Ensures one-to-one mapping between content and owner.
+* **Blockchain Ledger**: Stores immutable records of registered IP hashes, cryptographically linked via block hashes.
+* **User Identity System**: Each user is assigned a cryptographic key pair (private/public).
+* **Zero-Knowledge Proof Engine**: Implements a Schnorr-style challenge–response protocol to prove ownership.
+* **Duplicate IP Registry**: Enforces one-to-one mapping between content and owner.
+* **REST API Server**: Exposes blockchain functionality over HTTP using JSON payloads.
 
 ---
-
-## Technologies Used
-- **Language**: C++
-- **Cryptography**:
-  - Modular Exponentiation
-  - Discrete Logarithm Problem
-  - Schnorr Zero-Knowledge Proof
-- **Hashing**:
-  - djb2 (used for IP and block hashing for performance reasons)
-- **Data Structures**:
-  - `vector`
-  - `unordered_map`
-  - Custom `struct` abstractions
-
----
-
-## Project Structure
-
-```
-
-zkp_blockchain/
-│
-├── crypto.h / crypto.cpp        # Hashing and modular arithmetic
-├── user.h / user.cpp            # User identity and key management
-├── block.h                      # Blockchain block structure
-├── blockchain.h / blockchain.cpp# Core blockchain logic and ZKP verification
-└── main.cpp                     # CLI entry point
-
-```
-
----
-
 ## Cryptographic Theory
 
 ### Zero-Knowledge Proof (Schnorr Protocol)
-The system implements a Schnorr-style ZKP to prove knowledge of a private key `x` without revealing it.
+
+The system implements a Schnorr-style Zero-Knowledge Proof to prove knowledge of a private key $x$ without revealing it.
 
 #### Public Parameters
-- Prime modulus `p`
-- Generator `g`
+* Prime modulus $p$
+* Generator $g$
 
 #### User Keys
-- Private key: `x`
-- Public key: `y = g^x mod p`
+* **Private key**: $x$
+* **Public key**: $y = g^x \pmod p$
 
 #### Protocol Steps
-1. Prover selects random `r`
-2. Computes commitment `h = g^r mod p`
-3. Verifier issues random challenge `c`
-4. Prover responds with `s = r + c·x mod (p−1)`
-5. Verification:
-```
+1. **Commitment**: Prover selects random $r$ and computes $h = g^r \pmod p$.
+2. **Challenge**: Verifier issues a random challenge $c$.
+3. **Response**: Prover responds with $s = r + c \cdot x \pmod{p-1}$.
+4. **Verification Condition**:
+   $$g^s \equiv h \cdot y^c \pmod p$$
 
-g^s ≡ h · y^c (mod p)
-
-````
-
-If the equality holds, ownership is verified without exposing `x`.
-
----
+If the equality holds, ownership is verified without exposing $x$.
 
 ## Blockchain Design
 
 Each block contains:
-- Block index
-- Hash of previous block
-- Hash of IP content
-- Creator ID
-- Timestamp
-- Block hash
+* Block index
+* Hash of previous block
+* Hash of IP content
+* Creator ID
+* Timestamp
+* Block hash
 
-Blocks are cryptographically chained, making tampering detectable.
-
----
-
-## Use Cases
-
-### Primary Use Cases
-- Intellectual property ownership registration
-- Academic research validation
-- Digital content provenance tracking
-- Secure authorship verification
-
-### Potential Applications
-- Research paper timestamping
-- Music and digital art ownership claims
-- Software originality verification
-- Internal enterprise IP registries
+Blocks are cryptographically chained, making tampering immediately detectable.
 
 ---
 
+## REST API Endpoints
+
+### Health Check
+`GET /health`
+```json
+{ "status": "ok" }
+```
+### Register User
+`POST /register Request:`
+``` JSON
+{ "userID": "alice" }
+```
+### Response:
+``` JSON
+{ "success": true }
+```
+### Register IP Content
+`POST /create` Request:
+``` JSON
+{
+  "creator": "alice",
+  "content": "my-secret-ip"
+}
+```
+### Response:
+``` JSON
+{ "success": true }
+```
+Note: Duplicate content registration by another user is rejected.
+
+### Verify Ownership
+`POST /verify` Request:
+``` JSON
+{
+  "creator": "alice",
+  "content": "my-secret-ip"
+}
+```
+### Response:
+``` JSON
+{ "valid": true }
+```
+### Export Blockchain
+### `GET /chain` Response:
+``` JSON
+[
+  {
+    "index": 0,
+    "creator": "system",
+    "ipHash": 0,
+    "prevHash": 0,
+    "blockHash": 0,
+    "timestamp": 1766945885
+  }
+]
+```
 ## Setup Instructions
 
 ### Prerequisites
-- C++17 compatible compiler (GCC / Clang / MSVC)
-- Standard C++ library
+* Windows 10 or later
+* C++17 compatible compiler (MinGW / GCC / MSVC)
+* No external dependencies required (header-only libraries used)
 
-### Single step Method 
-* If you have a compatible compiler, you can simply download the " ./zkp_blockchain " file and run it from terminal.
-
-(Windows will probably raise a warning for non-trusted sources, you can ignore it.) 
-
-
-### Compilation
+### Compilation (Windows / MinGW)
 ```bash
-g++ main.cpp blockchain.cpp crypto.cpp user.cpp -o zkp_blockchain
-````
-
-### Execution
-
-```bash
-./zkp_blockchain
+g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server
 ```
-
----
-
-## Usage Guide
-
-### 1. Register a User
-
-Creates a cryptographic key pair for the user.
-
-```
-Option: 1
-Input: User ID
-```
-
-### 2. Register IP Content
-
-Associates unique content with the user.
-
-```
-Option: 2
-Input: User ID
-Input: Content
-```
-
-Duplicate content registration by another user is rejected.
-
-### 3. Verify Ownership
-
-Performs Zero-Knowledge Proof verification.
-
-```
-Option: 3
-Input: User ID
-Input: Content
-```
-
-No private key or content hash is revealed.
-
-### 4. View Blockchain
-
-Displays all registered blocks with metadata.
-
-```
-Option: 4
-```
-
----
-
 ## Security Properties
-
 * Ownership privacy preserved
 * No private keys exposed
-* Tamper-evident ledger
-* Replay-attack resistant ZKP
+* Tamper-evident blockchain ledger
+* Replay-resistant ZKP protocol
 * Constant-time duplicate detection
-
----
+* Read-only blockchain export
 
 ## Limitations
-
-* Uses djb2 hashing (non-cryptographic)
+* Uses `djb2` hashing (non-cryptographic)
 * In-memory storage only
 * Single-node execution
-* No network consensus
 * No persistent storage
-
-These limitations are intentional to keep the system lightweight and instructional.
-
----
+* No authentication tokens
+* Small prime numbers used for ZKP (educational purposes)
 
 ## Future Enhancements
-
-* Persistent ledger storage
-* Distributed peer-to-peer nodes
-* Digital signature support
-* Cryptographically secure hash functions
-* REST API and web interface
+* Persistent blockchain and user storage
+* Cryptographically secure hash functions (SHA-256)
+* Digital signatures for request authentication
+* Distributed peer-to-peer consensus
+* Web-based frontend (React)
 * Smart contract-based licensing
-* zk-SNARK integration
+* zk-SNARK or zk-STARK integration
 
 ---
 
-## Educational Value
-
-This project demonstrates:
-
-* Applied blockchain engineering
-* Practical Zero-Knowledge Proof usage
-* Secure system design principles
-* Cryptographic protocol implementation in C++
-
----
-## FootNotes
-* user.h and user.cpp added for architecture purposes, can be used to independently add or update the user info on the block.
-
-* the ZKP proof is just proof of concept and not cryptographically strong to implement to the real world.(small prime numbers used)
-
-* the hashing mechanism used is djb2 which is a light-weight and easy to implement hashing technique, but not used in real implementations.
+**Footnotes**
+* `user.h` and `user.cpp` are included for architectural separation and future extensibility.
+* The ZKP implementation is a proof-of-concept and not production-grade.
+* The `djb2` hashing algorithm is used for simplicity and performance, not cryptographic security.
