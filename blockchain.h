@@ -3,32 +3,33 @@
 
 #include <vector>
 #include <unordered_map>
+#include <string>
+
 #include "block.h"
 #include "user.h"
 
 using namespace std;
 
 class Blockchain {
-public:
+private:
     vector<Block> chain;
     unordered_map<unsigned long, string> ipRegistry;
+    unordered_map<string, User> users;
 
     unsigned long computeBlockHash(const Block &b);
-    const std::vector<Block>& getChain() const {
-        return chain;
-    }
 
-
-
+public:
     Blockchain();
 
+    // User & blockchain operations
     bool registerUser(const string &userID);
     bool createBlock(const string &creatorID, const string &content);
     bool verifyOwnership(const string &creatorID, const string &content);
 
+    // Console view (CLI)
     void viewChain();
 
-    unordered_map<string, User> users;
+    // REST API support
+    string exportChainJSON() const;
 };
-
-#endif
+#endif // BLOCKCHAIN_H
