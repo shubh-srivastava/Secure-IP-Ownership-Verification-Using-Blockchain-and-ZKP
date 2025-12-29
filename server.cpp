@@ -12,6 +12,16 @@ int main() {
     Blockchain blockchain;
     httplib::Server svr;
 
+    svr.set_default_headers({
+        { "Access-Control-Allow-Origin", "*" },
+        { "Access-Control-Allow-Methods", "GET, POST, OPTIONS" },
+        { "Access-Control-Allow-Headers", "Content-Type" }
+    });
+
+    svr.Options("/.*", [](const httplib::Request&, httplib::Response& res) {
+        res.status = 200;
+    });
+
     // Health check
     svr.Get("/health", [](const httplib::Request&, httplib::Response& res) {
         res.set_content(R"({"status":"ok"})", "application/json");
