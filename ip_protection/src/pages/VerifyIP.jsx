@@ -22,18 +22,32 @@ export default function VerifyIP() {
     );
 
     setCreator("");
-    setContent(""); // ✅ clear inputs regardless
+    setContent("");
   }
 
   return (
-    <div>
-      <h2>Verify Ownership</h2>
-      <form onSubmit={submit}>
-        <input value={creator} onChange={e => setCreator(e.target.value)} />
-        <textarea value={content} onChange={e => setContent(e.target.value)} />
-        <button>Verify</button>
+    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
+      <h2 className="text-2xl font-bold mb-4">Verify Ownership</h2>
+
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <input
+          className="border p-2 rounded"
+          placeholder="Creator ID"
+          value={creator}
+          onChange={e => setCreator(e.target.value)}
+        />
+        <textarea
+          className="border p-2 rounded"
+          placeholder="IP Content"
+          value={content}
+          onChange={e => setContent(e.target.value)}
+        />
+        <button className="bg-purple-600 text-white py-2 rounded">
+          Verify
+        </button>
       </form>
-      <p>{msg}</p>
+
+      {msg && <p className="mt-3">{msg}</p>}
     </div>
   );
 }

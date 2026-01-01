@@ -128,17 +128,91 @@ Note: Duplicate content registration by another user is rejected.
   }
 ]
 ```
+
+## Frontend Implementation
+
+The project includes a **modern web-based frontend built using React (Vite)** that interfaces directly with the C++ REST API backend. The frontend serves as a **visual and interactive layer** for demonstrating the system’s blockchain and Zero-Knowledge Proof functionality without compromising cryptographic principles.
+
+### Key Features
+- **System Dashboard**  
+  Displays real-time server health, blockchain status, total blocks, and genesis timestamp.
+- **User Registration Interface**  
+  Allows creation of cryptographic user identities via the `/register` API.
+- **IP Registration Interface**  
+  Enables users to register intellectual property content on the blockchain while enforcing duplicate prevention.
+- **Ownership Verification Interface**  
+  Demonstrates Zero-Knowledge Proof–based ownership verification through the `/verify` endpoint without exposing private keys or sensitive data.
+- **Blockchain Explorer**  
+  Provides a read-only, transparent view of blockchain blocks retrieved from the `/chain` endpoint.
+
+### Frontend Design Principles
+- Stateless communication with the backend via REST APIs
+- No handling or storage of private keys on the client side
+- Clear separation between cryptographic logic (backend) and presentation (frontend)
+- Graceful handling of server availability and error states
+- Responsive and clean UI styled using **Tailwind CSS**
+
+The frontend transforms the system from a backend prototype into a **fully demonstrable cryptography application**, making it suitable for academic presentations, technical demonstrations, and future extension into a production-grade web interface.
+
 ## Setup Instructions
-
 ### Prerequisites
-* Windows 10 or later
-* C++17 compatible compiler (MinGW / GCC / MSVC)
-* No external dependencies required (header-only libraries used)
+- Windows 10 or later  
+- C++17 compatible compiler (MinGW / GCC / MSVC)  
+- Node.js (v18 or later recommended)  
+- npm (comes with Node.js)  
+- No external C++ dependencies required (header-only libraries used)
 
-### Compilation (Windows / MinGW)
+### Backend Compilation (Windows / MinGW)
+
+Compile the C++ REST API server using the following command:
+
 ```bash
 g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server
 ```
+Run the server:
+```bash
+./zkp_server
+```
+The server will start at:
+```bash
+http://localhost:18080
+```
+
+## Frontend Setup (React + Vite)
+
+Navigate to the frontend project directory and install dependencies:
+```bash
+npm install
+```
+Start the development server:
+```bash
+npm run dev 
+```
+The frontend will be available at:
+```bash
+http://localhost:5173
+```
+## Verification
+
+Ensure the backend server is running before accessing the frontend.
+The frontend dashboard performs a health check against the backend and displays the server status in real time.
+
+You can manually verify the backend using:
+```bash
+curl http://localhost:18080/health
+```
+Expected response:
+```json
+{ "status": "ok" }
+```
+## Notes
+
+- The backend must be running for frontend features such as user registration, IP registration, and ownership verification to function correctly.
+
+- All blockchain data is stored in memory and resets when the server restarts.
+
+- The frontend does not store or handle private keys and communicates with the backend exclusively through REST APIs.
+
 ## Security Properties
 * Ownership privacy preserved
 * No private keys exposed
@@ -166,7 +240,7 @@ g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_ser
 
 ---
 
-**Footnotes**
+### Footnotes ###
 * `user.h` and `user.cpp` are included for architectural separation and future extensibility.
 * The ZKP implementation is a proof-of-concept and not production-grade.
 * The `djb2` hashing algorithm is used for simplicity and performance, not cryptographic security.

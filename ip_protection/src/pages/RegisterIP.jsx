@@ -19,21 +19,35 @@ export default function RegisterIP() {
     if (data.success) {
       setMsg("✅ IP registered successfully");
       setCreator("");
-      setContent(""); // ✅ clear both
+      setContent("");
     } else {
       setMsg("❌ Duplicate IP detected");
     }
   }
 
   return (
-    <div>
-      <h2>Register IP</h2>
-      <form onSubmit={submit}>
-        <input value={creator} onChange={e => setCreator(e.target.value)} />
-        <textarea value={content} onChange={e => setContent(e.target.value)} />
-        <button>Submit</button>
+    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
+      <h2 className="text-2xl font-bold mb-4">Register IP</h2>
+
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <input
+          className="border p-2 rounded"
+          placeholder="Creator ID"
+          value={creator}
+          onChange={e => setCreator(e.target.value)}
+        />
+        <textarea
+          className="border p-2 rounded"
+          placeholder="IP Content"
+          value={content}
+          onChange={e => setContent(e.target.value)}
+        />
+        <button className="bg-blue-600 text-white py-2 rounded">
+          Register IP
+        </button>
       </form>
-      <p>{msg}</p>
+
+      {msg && <p className="mt-3">{msg}</p>}
     </div>
   );
 }

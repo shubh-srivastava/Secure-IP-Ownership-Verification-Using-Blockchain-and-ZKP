@@ -17,23 +17,30 @@ export default function RegisterUser() {
 
     if (data.success) {
       setMsg("✅ User registered successfully");
-      setUserID(""); // ✅ clear input
+      setUserID("");
     } else {
       setMsg("❌ User already exists");
     }
   }
 
   return (
-    <div>
-      <h2>Register User</h2>
-      <form onSubmit={submit}>
+    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
+      <h2 className="text-2xl font-bold mb-4">Register User</h2>
+
+      <form onSubmit={submit} className="flex gap-3">
         <input
+          className="flex-1 border p-2 rounded"
           value={userID}
           onChange={e => setUserID(e.target.value)}
+          placeholder="User ID"
+          required
         />
-        <button>Register</button>
+        <button className="bg-green-600 text-white px-4 rounded">
+          Register
+        </button>
       </form>
-      <p>{msg}</p>
+
+      {msg && <p className="mt-3">{msg}</p>}
     </div>
   );
 }

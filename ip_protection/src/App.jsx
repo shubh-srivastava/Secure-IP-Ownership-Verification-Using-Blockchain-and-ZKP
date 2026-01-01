@@ -10,7 +10,7 @@ import Blockchain from "./pages/Blockchain";
 export default function App() {
   return (
     <BrowserRouter>
-      <Navbar /> 
+      <Navbar />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/register" element={<RegisterUser />} />

@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 
 export default function Navbar() {
   return (
-    <nav style={{ padding: "10px", borderBottom: "1px solid black" }}>
-      <Link to="/">Dashboard</Link>{" | "}
-      <Link to="/register">Register User</Link>{" | "}
-      <Link to="/create">Register IP</Link>{" | "}
-      <Link to="/verify">Verify Ownership</Link>{" | "}
-      <Link to="/chain">Blockchain</Link>
+    <nav className="bg-gray-900 text-white px-8 py-4 flex gap-6">
+      <Link className="hover:text-green-400" to="/">Dashboard</Link>
+      <Link className="hover:text-green-400" to="/register">Register User</Link>
+      <Link className="hover:text-green-400" to="/create">Register IP</Link>
+      <Link className="hover:text-green-400" to="/verify">Verify Ownership</Link>
+      <Link className="hover:text-green-400" to="/chain">Blockchain</Link>
     </nav>
   );
 }

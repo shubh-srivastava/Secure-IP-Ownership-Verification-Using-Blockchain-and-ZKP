@@ -10,10 +10,19 @@ export default function Blockchain() {
   }, []);
 
   return (
-    <div>
-      <h2>Blockchain</h2>
+    <div className="max-w-4xl mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-4">Blockchain Explorer</h2>
+
       {chain.map((b, i) => (
-        <pre key={i}>{JSON.stringify(b, null, 2)}</pre>
+        <div key={i} className="bg-white p-4 rounded shadow mb-3">
+          <p><strong>Index:</strong> {b.index}</p>
+          <p><strong>Creator:</strong> {b.creator}</p>
+          <p className="break-all"><strong>IP Hash:</strong> {b.ipHash}</p>
+          <p className="break-all"><strong>Prev Hash:</strong> {b.prevHash}</p>
+          <p className="text-sm text-gray-600">
+            {new Date(b.timestamp * 1000).toLocaleString()}
+          </p>
+        </div>
       ))}
     </div>
   );
