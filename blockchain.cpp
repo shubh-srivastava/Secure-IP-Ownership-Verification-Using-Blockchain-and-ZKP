@@ -8,10 +8,6 @@ using json = nlohmann::json;
 
 using namespace std;
 
-// two prime numbers used for ZKP, very large in practice
-static const int P = 7057;
-static const int G = 5;
-
 // marks the starting block of the blockchain.
 Blockchain::Blockchain() {
     Block genesis(0, 0, 0, "system", 0);
@@ -30,13 +26,22 @@ unsigned long Blockchain::computeBlockHash(const Block &b) {
     return djb2Hash(data);
 }
 
-bool Blockchain::registerUser(const string &userID) {
+int Blockchain::computeChallenge(int commitment, int publicKey,
+                                 unsigned long ipHash,
+                                 const string &creatorID) const {
+    string data =
+        to_string(commitment) +
+        to_string(publicKey) +
+        to_string(ipHash) +
+        creatorID;
+    unsigned long h = djb2Hash(data);
+    return static_cast<int>(h % (P - 1));
+}
+
+bool Blockchain::registerUser(const string &userID, int publicKey) {
     if (users.count(userID)) return false;
 
-    int privateKey = rand() % (P - 2) + 1;
-    int publicKey = modExp(G, privateKey, P);
-
-    users.emplace(userID, User(userID, privateKey, publicKey));
+    users.emplace(userID, User(userID, publicKey));
     return true;
 }
 
@@ -73,7 +78,9 @@ bool Blockchain::createBlock(const string &creatorID, const string &content) {
  Prove knowledge of privateKey without revealing it
 */
 bool Blockchain::verifyOwnership(const string &creatorID,
-                                 const string &content) {
+                                 const string &content,
+                                 int commitment,
+                                 int response) {
     if (!users.count(creatorID)) {
         cout << "Verification failed: user not registered.\n";
         return false;
@@ -91,16 +98,11 @@ bool Blockchain::verifyOwnership(const string &creatorID,
         return false;
     }
 
-    User &u = users.at(creatorID);
+    const User &u = users.at(creatorID);
 
-    int r = rand() % (P - 1);
-    int h = modExp(G, r, P);
-
-    int challenge = rand() % (P - 1);
-    int s = (r + challenge * u.privateKey) % (P - 1);
-
-    int left = modExp(G, s, P);
-    int right = (h * modExp(u.publicKey, challenge, P)) % P;
+    int challenge = computeChallenge(commitment, u.publicKey, ipHash, creatorID);
+    int left = modExp(G, response, P);
+    int right = (commitment * modExp(u.publicKey, challenge, P)) % P;
 
     if (left == right) {
         cout << "ZKP verification successful.\n";

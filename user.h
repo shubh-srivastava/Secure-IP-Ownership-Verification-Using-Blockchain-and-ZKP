@@ -7,11 +7,10 @@ using namespace std;
 
 struct User {
     string id;
-    int privateKey;
     int publicKey;
 
-    User(const string &uid, int priv, int pub)
-        : id(uid), privateKey(priv), publicKey(pub) {}
+    User(const string &uid, int pub)
+        : id(uid), publicKey(pub) {}
 };
 
 #endif

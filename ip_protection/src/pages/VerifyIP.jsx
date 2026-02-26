@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { generateProof, getKeys } from "../services/zkp";
 
 export default function VerifyIP() {
   const [creator, setCreator] = useState("");
@@ -8,10 +9,27 @@ export default function VerifyIP() {
   async function submit(e) {
     e.preventDefault();
 
+    const keys = getKeys(creator);
+    if (!keys) {
+      setMsg("❌ No local key for this user. Register first.");
+      return;
+    }
+
+    const proof = generateProof(creator, content);
+    if (!proof) {
+      setMsg("❌ Proof generation failed.");
+      return;
+    }
+
     const res = await fetch("http://localhost:18080/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ creator, content })
+      body: JSON.stringify({
+        creator,
+        content,
+        commitment: proof.commitment,
+        response: proof.response
+      })
     });
 
     const data = await res.json();

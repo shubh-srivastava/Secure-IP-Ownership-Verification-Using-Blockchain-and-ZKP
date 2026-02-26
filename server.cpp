@@ -32,17 +32,20 @@ int main() {
         res.set_content(blockchain.exportChainJSON(), "application/json");
     });
 
-    // Register user
+    // Register user (public key only; private key stays client-side)
     svr.Post("/register", [&](const httplib::Request& req, httplib::Response& res) {
         try {
             json body = json::parse(req.body);
 
-            if (!body.contains("userID")) {
+            if (!body.contains("userID") || !body.contains("publicKey")) {
                 res.status = 400;
                 return;
             }
 
-            bool ok = blockchain.registerUser(body["userID"]);
+            bool ok = blockchain.registerUser(
+                body["userID"],
+                body["publicKey"]
+            );
 
             json response;
             response["success"] = ok;
@@ -83,19 +86,22 @@ int main() {
         }
     });
 
-    // Verify ownership
+    // Verify ownership (Schnorr ZKP, Fiat-Shamir)
     svr.Post("/verify", [&](const httplib::Request& req, httplib::Response& res) {
         try {
             json body = json::parse(req.body);
 
-            if (!body.contains("creator") || !body.contains("content")) {
+            if (!body.contains("creator") || !body.contains("content") ||
+                !body.contains("commitment") || !body.contains("response")) {
                 res.status = 400;
                 return;
             }
 
             bool valid = blockchain.verifyOwnership(
                 body["creator"],
-                body["content"]
+                body["content"],
+                body["commitment"],
+                body["response"]
             );
 
             json response;

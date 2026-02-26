@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createUserKeys } from "../services/zkp";
 
 export default function RegisterUser() {
   const [userID, setUserID] = useState("");
@@ -7,16 +8,18 @@ export default function RegisterUser() {
   async function submit(e) {
     e.preventDefault();
 
+    const keys = createUserKeys(userID);
+
     const res = await fetch("http://localhost:18080/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userID })
+      body: JSON.stringify({ userID, publicKey: keys.pub })
     });
 
     const data = await res.json();
 
     if (data.success) {
-      setMsg("✅ User registered successfully");
+      setMsg(`✅ User registered. Public key: ${keys.pub}`);
       setUserID("");
     } else {
       setMsg("❌ User already exists");
