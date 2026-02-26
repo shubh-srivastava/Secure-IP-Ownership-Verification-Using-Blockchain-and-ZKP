@@ -1,8 +1,4 @@
-# Blockchain-Based IP Ownership Verification System
-
-### Using Zero-Knowledge Proofs (Schnorr Protocol)
-
----
+# Blockchain-Based IP Ownership Verification System Using Zero-Knowledge Proofs (Schnorr Protocol)
 
 ## Abstract
 
@@ -31,7 +27,7 @@ This project is designed as a **secure, extensible prototype** suitable for acad
 
 * **Blockchain Ledger**: Stores immutable records of registered IP hashes, cryptographically linked via block hashes.
 * **User Identity System**: Each user is assigned a cryptographic key pair (private/public).
-* **Zero-Knowledge Proof Engine**: Implements a Schnorr-style challenge–response protocol to prove ownership.
+* **Zero-Knowledge Proof Engine**: Implements a Schnorr-style challenge-response protocol to prove ownership.
 * **Duplicate IP Registry**: Enforces one-to-one mapping between content and owner.
 * **REST API Server**: Exposes blockchain functionality over HTTP using JSON payloads.
 
@@ -62,7 +58,7 @@ If the equality holds, ownership is verified without exposing $x$.
 ## Zero-Knowledge Proof Implementation (Project Specific)
 
 This project implements a **real Schnorr Zero-Knowledge Proof** flow using a
-Fiatâ€“Shamir (non-interactive) variant. The **prover is the client**, and the
+Fiat-Shamir (non-interactive) variant. The **prover is the client**, and the
 **verifier is the server**. The server never stores private keys.
 
 ### Roles and Data Flow
@@ -77,7 +73,7 @@ Fiatâ€“Shamir (non-interactive) variant. The **prover is the client**, and 
    The client sends `publicKey` during `/register`.
 2. **Commitment (client-side)**  
    Pick random `r` and compute `R = g^r mod p`.
-3. **Challenge (client-side, Fiatâ€“Shamir)**  
+3. **Challenge (client-side, Fiat-Shamir)**  
    Compute `c = H(R || y || ipHash || userID) mod (p-1)` using the existing
    `djb2` hash (kept for performance constraints).
 4. **Response (client-side)**  
@@ -125,7 +121,7 @@ Blocks are cryptographically chained, making tampering immediately detectable.
 ### Register User
 `POST /register Request:`
 ``` JSON
-{ "userID": "alice" }
+{ "userID": "alice", "publicKey": 1234 }
 ```
 ### Response:
 ``` JSON
@@ -150,7 +146,9 @@ Note: Duplicate content registration by another user is rejected.
 ``` JSON
 {
   "creator": "alice",
-  "content": "my-secret-ip"
+  "content": "my-secret-ip",
+  "commitment": 1111,
+  "response": 2222
 }
 ```
 ### Response:
@@ -174,7 +172,7 @@ Note: Duplicate content registration by another user is rejected.
 
 ## Frontend Implementation
 
-The project includes a **modern web-based frontend built using React (Vite)** that interfaces directly with the C++ REST API backend. The frontend serves as a **visual and interactive layer** for demonstrating the system’s blockchain and Zero-Knowledge Proof functionality without compromising cryptographic principles.
+The project includes a **modern web-based frontend built using React (Vite)** that interfaces directly with the C++ REST API backend. The frontend serves as a **visual and interactive layer** for demonstrating the system's blockchain and Zero-Knowledge Proof functionality without compromising cryptographic principles.
 
 ### Key Features
 - **System Dashboard**  
@@ -184,13 +182,13 @@ The project includes a **modern web-based frontend built using React (Vite)** th
 - **IP Registration Interface**  
   Enables users to register intellectual property content on the blockchain while enforcing duplicate prevention.
 - **Ownership Verification Interface**  
-  Demonstrates Zero-Knowledge Proof–based ownership verification through the `/verify` endpoint without exposing private keys or sensitive data.
+  Demonstrates Zero-Knowledge Proof-based ownership verification through the `/verify` endpoint without exposing private keys or sensitive data.
 - **Blockchain Explorer**  
   Provides a read-only, transparent view of blockchain blocks retrieved from the `/chain` endpoint.
 
 ### Frontend Design Principles
 - Stateless communication with the backend via REST APIs
-- No handling or storage of private keys on the client side
+- Client-side key generation and local storage (keys are not sent to the server)
 - Clear separation between cryptographic logic (backend) and presentation (frontend)
 - Graceful handling of server availability and error states
 - Responsive and clean UI styled using **Tailwind CSS**
@@ -222,6 +220,22 @@ The server will start at:
 ```bash
 http://localhost:18080
 ```
+
+## Testing With CLI Client
+
+Compile and run the standalone CLI client to exercise the server endpoints:
+
+```bash
+g++ cli_client.cpp crypto.cpp -std=c++17 -lws2_32 -o cli_client
+./cli_client
+```
+
+The CLI client can be used to confirm the server is running and supports:
+- `/health` health check
+- `/register` user registration with public key
+- `/create` IP registration
+- `/verify` ZKP ownership verification
+- `/chain` blockchain export
 
 ## Frontend Setup (React + Vite)
 
@@ -256,7 +270,7 @@ Expected response:
 
 - All blockchain data is stored in memory and resets when the server restarts.
 
-- The frontend does not store or handle private keys and communicates with the backend exclusively through REST APIs.
+- The frontend generates and stores private keys locally (browser localStorage) and communicates with the backend exclusively through REST APIs.
 
 ## Security Properties
 * Ownership privacy preserved
