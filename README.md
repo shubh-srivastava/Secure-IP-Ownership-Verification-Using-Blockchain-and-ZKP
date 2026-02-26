@@ -1,4 +1,5 @@
 # Blockchain-Based IP Ownership Verification System
+
 ### Using Zero-Knowledge Proofs (Schnorr Protocol)
 
 ---
@@ -57,6 +58,48 @@ The system implements a Schnorr-style Zero-Knowledge Proof to prove knowledge of
    $$g^s \equiv h \cdot y^c \pmod p$$
 
 If the equality holds, ownership is verified without exposing $x$.
+
+## Zero-Knowledge Proof Implementation (Project Specific)
+
+This project implements a **real Schnorr Zero-Knowledge Proof** flow using a
+Fiatâ€“Shamir (non-interactive) variant. The **prover is the client**, and the
+**verifier is the server**. The server never stores private keys.
+
+### Roles and Data Flow
+- **Client (prover)** generates a private/public key pair locally.
+- **Server (verifier)** stores only the public key and verifies proofs.
+- The proof is bound to the IP hash and user ID so it cannot be replayed for
+  other content or users.
+
+### Steps Used in This Project
+1. **Key Generation (client-side)**  
+   Private key `x` is generated locally. Public key is `y = g^x mod p`.  
+   The client sends `publicKey` during `/register`.
+2. **Commitment (client-side)**  
+   Pick random `r` and compute `R = g^r mod p`.
+3. **Challenge (client-side, Fiatâ€“Shamir)**  
+   Compute `c = H(R || y || ipHash || userID) mod (p-1)` using the existing
+   `djb2` hash (kept for performance constraints).
+4. **Response (client-side)**  
+   Compute `s = r + c * x mod (p-1)`.
+5. **Verification (server-side)**  
+   Server recomputes `c` and verifies:  
+   `g^s = R * y^c (mod p)`
+
+### API Payloads
+- **Register User**
+```json
+{ "userID": "alice", "publicKey": 1234 }
+```
+- **Verify Ownership**
+```json
+{
+  "creator": "alice",
+  "content": "my-secret-ip",
+  "commitment": 1111,
+  "response": 2222
+}
+```
 
 ## Blockchain Design
 
@@ -165,6 +208,8 @@ The frontend transforms the system from a backend prototype into a **fully demon
 ### Backend Compilation (Windows / MinGW)
 
 Compile the C++ REST API server using the following command:
+
+(if running in Linux environment, remove the -lws2_32)
 
 ```bash
 g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server
