@@ -293,7 +293,6 @@ Expected response:
 * Cryptographically secure hash functions (SHA-256)
 * Digital signatures for request authentication
 * Distributed peer-to-peer consensus
-* Web-based frontend (React)
 * Smart contract-based licensing
 * zk-SNARK or zk-STARK integration
 
