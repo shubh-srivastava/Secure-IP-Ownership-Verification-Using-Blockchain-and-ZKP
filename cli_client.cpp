@@ -29,7 +29,8 @@ int main() {
              << "3. Register IP\n"
              << "4. Verify Ownership (ZKP)\n"
              << "5. View Blockchain\n"
-             << "6. Exit\n";
+             << "6. Reset Blockchain\n"
+             << "7. Exit\n";
 
         int choice;
         cin >> choice;
@@ -114,6 +115,14 @@ int main() {
             auto res = cli.Get("/chain");
             if (res) {
                 cout << res->body << "\n";
+            } else {
+                cout << "Request failed.\n";
+            }
+        } else if (choice == 6) {
+            auto res = cli.Post("/reset", "{}", "application/json");
+            if (res) {
+                cout << res->body << "\n";
+                cout << "Local keys in this CLI session were kept.\n";
             } else {
                 cout << "Request failed.\n";
             }

@@ -9,3 +9,5 @@ zkp_blockchain.exe
 zkp_server
 
 zkp_server.exe
+
+blockchain_state.json

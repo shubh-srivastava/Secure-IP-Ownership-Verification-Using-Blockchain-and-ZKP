@@ -8,9 +8,20 @@
 using json = nlohmann::json;
 using namespace std;
 
-int main() {
+int main(int argc, char *argv[]) {
     Blockchain blockchain;
     httplib::Server svr;
+
+    for (int i = 1; i < argc; ++i) {
+        string arg = argv[i];
+        if (arg == "--reset-chain") {
+            cout << "Startup flag detected: resetting persisted blockchain state.\n";
+            if (!blockchain.resetState()) {
+                cerr << "Unable to reset blockchain state during startup.\n";
+                return 1;
+            }
+        }
+    }
 
     svr.set_default_headers({
         { "Access-Control-Allow-Origin", "*" },
@@ -30,6 +41,23 @@ int main() {
     // Export blockchain
     svr.Get("/chain", [&](const httplib::Request&, httplib::Response& res) {
         res.set_content(blockchain.exportChainJSON(), "application/json");
+    });
+
+    // Reset blockchain and user registry
+    svr.Post("/reset", [&](const httplib::Request&, httplib::Response& res) {
+        json response;
+        bool ok = blockchain.resetState();
+
+        response["success"] = ok;
+        response["message"] = ok
+            ? "Blockchain reset to genesis block."
+            : "Failed to reset blockchain state.";
+
+        if (!ok) {
+            res.status = 500;
+        }
+
+        res.set_content(response.dump(), "application/json");
     });
 
     // Register user (public key only; private key stays client-side)

@@ -4,7 +4,7 @@
 
 This project implements a **C++-based blockchain-backed system** for registering and verifying ownership of digital intellectual property (IP) using **Zero-Knowledge Proofs (ZKP)**. The system allows users to prove ownership of registered content **without revealing private keys or original content**, ensuring privacy, integrity, and tamper resistance.
 
-The current implementation extends beyond a CLI prototype and provides a **fully functional REST API backend**, enabling programmatic interaction, JSON-based blockchain export, and seamless integration with future frontends.
+The current implementation extends beyond a CLI prototype and provides a **fully functional REST API backend**, enabling programmatic interaction, JSON-based blockchain export, file-based blockchain persistence, and seamless integration with future frontends.
 
 This project is designed as a **secure, extensible prototype** suitable for academic research, cryptography demonstrations, and real-world system evolution.
 
@@ -29,6 +29,7 @@ This project is designed as a **secure, extensible prototype** suitable for acad
 * **User Identity System**: Each user is assigned a cryptographic key pair (private/public).
 * **Zero-Knowledge Proof Engine**: Implements a Schnorr-style challenge-response protocol to prove ownership.
 * **Duplicate IP Registry**: Enforces one-to-one mapping between content and owner.
+* **Persistent State Snapshot**: Stores blockchain and registered public keys in a local JSON snapshot file and reloads them on startup.
 * **REST API Server**: Exposes blockchain functionality over HTTP using JSON payloads.
 
 ---
@@ -109,6 +110,50 @@ Each block contains:
 
 Blocks are cryptographically chained, making tampering immediately detectable.
 
+## Persistent Blockchain Storage
+
+The backend now uses a **single JSON snapshot file** named `blockchain_state.json`
+to persist runtime state across restarts.
+
+### What Is Stored
+- The full blockchain (`chain`)
+- Registered users and their public keys (`users`)
+
+### When It Is Saved
+- After a successful `/register`
+- After a successful `/create`
+- After a successful `/reset`
+
+### When It Is Loaded
+- Automatically when the server starts
+
+### Server Logging
+- The backend prints terminal logs when state is loaded, initialized fresh, saved after changes, and reset
+
+### Reset Behavior
+- The reset flow clears all registered users
+- The blockchain is reduced back to the genesis block
+- The snapshot file is rewritten with the fresh genesis-only state
+
+### Sample `blockchain_state.json`
+This is the structure written after a clean reset or a fresh first run:
+
+```json
+{
+  "chain": [
+    {
+      "blockHash": 0,
+      "creator": "system",
+      "index": 0,
+      "ipHash": 0,
+      "prevHash": 0,
+      "timestamp": 1773395896
+    }
+  ],
+  "users": []
+}
+```
+
 ---
 
 ## REST API Endpoints
@@ -169,6 +214,13 @@ Note: Duplicate content registration by another user is rejected.
   }
 ]
 ```
+### Reset Blockchain State
+`POST /reset`
+```json
+{ "success": true, "message": "Blockchain reset to genesis block." }
+```
+This clears the registered user list, rewrites `blockchain_state.json`, and leaves
+only the genesis block in the chain.
 
 ## Frontend Implementation
 
@@ -176,7 +228,7 @@ The project includes a **modern web-based frontend built using React (Vite)** th
 
 ### Key Features
 - **System Dashboard**  
-  Displays real-time server health, blockchain status, total blocks, and genesis timestamp.
+  Displays real-time server health, blockchain status, total blocks, and includes a reset button to clear the persisted blockchain state.
 - **User Registration Interface**  
   Allows creation of cryptographic user identities via the `/register` API.
 - **IP Registration Interface**  
@@ -216,6 +268,10 @@ Run the server:
 ```bash
 ./zkp_server
 ```
+To start the server and wipe the persisted blockchain snapshot first:
+```bash
+./zkp_server --reset-chain
+```
 The server will start at:
 ```bash
 http://localhost:18080
@@ -236,6 +292,10 @@ The CLI client can be used to confirm the server is running and supports:
 - `/create` IP registration
 - `/verify` ZKP ownership verification
 - `/chain` blockchain export
+- `/reset` blockchain reset back to the genesis block
+
+The CLI menu now also includes a **Reset Blockchain** option so you can clear the
+stored blockchain state directly from the terminal client.
 
 ## Frontend Setup (React + Vite)
 
@@ -268,7 +328,9 @@ Expected response:
 
 - The backend must be running for frontend features such as user registration, IP registration, and ownership verification to function correctly.
 
-- All blockchain data is stored in memory and resets when the server restarts.
+- Blockchain state is persisted in `blockchain_state.json` and automatically reloaded when the server restarts.
+
+- The frontend dashboard includes a reset button that calls `/reset` and refreshes the displayed blockchain state.
 
 - The frontend generates and stores private keys locally (browser localStorage) and communicates with the backend exclusively through REST APIs.
 
@@ -282,14 +344,14 @@ Expected response:
 
 ## Limitations
 * Uses `djb2` hashing (non-cryptographic)
-* In-memory storage only
+* Uses a single local JSON snapshot file rather than a database or distributed storage layer
 * Single-node execution
-* No persistent storage
 * No authentication tokens
 * Small prime numbers used for ZKP (educational purposes)
 
 ## Future Enhancements
-* Persistent blockchain and user storage
+* Snapshot + append-only WAL storage
+* Database-backed storage (SQLite / RocksDB)
 * Cryptographically secure hash functions (SHA-256)
 * Digital signatures for request authentication
 * Distributed peer-to-peer consensus

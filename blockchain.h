@@ -16,10 +16,14 @@ private:
     unordered_map<unsigned long, string> ipRegistry;
     unordered_map<string, User> users;
 
-    unsigned long computeBlockHash(const Block &b);
+    unsigned long computeBlockHash(const Block &b) const;
     int computeChallenge(int commitment, int publicKey,
                          unsigned long ipHash,
                          const string &creatorID) const;
+    void initializeGenesis();
+    void rebuildIPRegistry();
+    bool loadState();
+    bool saveState() const;
 
 public:
     static constexpr int P = 7057;
@@ -34,6 +38,7 @@ public:
                          const string &content,
                          int commitment,
                          int response);
+    bool resetState();
 
     // Console view (CLI)
     void viewChain();
