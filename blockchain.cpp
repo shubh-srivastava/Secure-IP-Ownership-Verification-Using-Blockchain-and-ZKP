@@ -10,7 +10,7 @@ using json = nlohmann::json;
 using namespace std;
 
 namespace {
-const char *STATE_FILE = "blockchain_state.json";
+    const char *STATE_FILE = "blockchain_state.json";
 }
 
 // marks the starting block of the blockchain.

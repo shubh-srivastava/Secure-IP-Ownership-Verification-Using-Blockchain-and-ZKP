@@ -2,7 +2,7 @@
 using namespace std;
 
 // can use a better hashing protocol, but will be very computaionally high to run local
-// this is proof of concept rpoject, therefore djb2Hash used.
+// this is proof of concept project, therefore djb2Hash used.
 unsigned long djb2Hash(const string &input) {
     unsigned long hash = 5381;
     for (char c : input) {
