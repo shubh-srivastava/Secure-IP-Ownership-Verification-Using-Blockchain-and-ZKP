@@ -4,7 +4,7 @@
 
 This project implements a **C++-based blockchain-backed system** for registering and verifying ownership of digital intellectual property (IP) using **Zero-Knowledge Proofs (ZKP)**. The system allows users to prove ownership of registered content **without revealing private keys or original content**, ensuring privacy, integrity, and tamper resistance.
 
-The current implementation extends beyond a CLI prototype and provides a **fully functional REST API backend**, enabling programmatic interaction, JSON-based blockchain export, file-based blockchain persistence, and seamless integration with future frontends.
+The current implementation extends beyond a CLI prototype and provides a **fully functional REST API backend**, enabling programmatic interaction, JSON-based blockchain export, configurable JSON/PostgreSQL persistence, and seamless integration with future frontends.
 
 This project is designed as a **secure, extensible prototype** suitable for academic research, cryptography demonstrations, and real-world system evolution.
 
@@ -29,7 +29,7 @@ This project is designed as a **secure, extensible prototype** suitable for acad
 * **User Identity System**: Each user is assigned a cryptographic key pair (private/public).
 * **Zero-Knowledge Proof Engine**: Implements a Schnorr-style challenge-response protocol to prove ownership.
 * **Duplicate IP Registry**: Enforces one-to-one mapping between content and owner.
-* **Persistent State Snapshot**: Stores blockchain and registered public keys in a local JSON snapshot file and reloads them on startup.
+* **Persistent Storage Layer**: Stores blockchain and registered public keys using either a local JSON snapshot file (default) or PostgreSQL (optional).
 * **REST API Server**: Exposes blockchain functionality over HTTP using JSON payloads.
 
 ---
@@ -112,8 +112,20 @@ Blocks are cryptographically chained, making tampering immediately detectable.
 
 ## Persistent Blockchain Storage
 
-The backend now uses a **single JSON snapshot file** named `blockchain_state.json`
-to persist runtime state across restarts.
+The backend supports two persistence modes:
+
+- **JSON snapshot mode (default)** using `blockchain_state.json`
+- **PostgreSQL mode (optional)** using tables `blocks` and `users`
+
+Storage mode is selected by **compile command**:
+
+- Build **without** `-DUSE_POSTGRESQL` -> JSON snapshot mode
+- Build **with** `-DUSE_POSTGRESQL` -> PostgreSQL mode
+
+In PostgreSQL mode, connection details are read from:
+- `BLOCKCHAIN_POSTGRES_CONNINFO` (preferred)
+- `DATABASE_URL` (fallback)
+- If both are unset, libpq defaults are used.
 
 ### What Is Stored
 - The full blockchain (`chain`)
@@ -128,12 +140,12 @@ to persist runtime state across restarts.
 - Automatically when the server starts
 
 ### Server Logging
-- The backend prints terminal logs when state is loaded, initialized fresh, saved after changes, and reset
+- The backend prints terminal logs for selected storage mode, load/initialize, save, and reset events
 
 ### Reset Behavior
 - The reset flow clears all registered users
 - The blockchain is reduced back to the genesis block
-- The snapshot file is rewritten with the fresh genesis-only state
+- The active backend (JSON snapshot or PostgreSQL tables) is rewritten with the fresh genesis-only state
 
 ### Sample `blockchain_state.json`
 This is the structure written after a clean reset or a fresh first run:
@@ -219,8 +231,8 @@ Note: Duplicate content registration by another user is rejected.
 ```json
 { "success": true, "message": "Blockchain reset to genesis block." }
 ```
-This clears the registered user list, rewrites `blockchain_state.json`, and leaves
-only the genesis block in the chain.
+This clears the registered user list, rewrites the active persistence backend, and
+leaves only the genesis block in the chain.
 
 ## Frontend Implementation
 
@@ -253,26 +265,58 @@ The frontend transforms the system from a backend prototype into a **fully demon
 - C++17 compatible compiler (MinGW / GCC / MSVC)  
 - Node.js (v18 or later recommended)  
 - npm (comes with Node.js)  
-- No external C++ dependencies required (header-only libraries used)
+- Optional for PostgreSQL mode:
+  - If using **MSYS2 MinGW g++**: install `mingw-w64-x86_64-postgresql` from MSYS2
+  - If using **MSVC**: use the PostgreSQL Windows installation `libpq`
 
-### Backend Compilation (Windows / MinGW)
+### Backend Run Modes (Windows)
 
-Compile the C++ REST API server using the following command:
+If running in Linux environment, remove `-lws2_32` from compile commands.
 
-(if running in Linux environment, remove the -lws2_32)
-
+#### JSON Mode (file persistence)
+Compile without `-DUSE_POSTGRESQL`:
 ```bash
-g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server
+C:\msys64\mingw64\bin\g++.exe server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server.exe
 ```
-Run the server:
+Run:
 ```bash
-./zkp_server
+.\zkp_server.exe
 ```
-To start the server and wipe the persisted blockchain snapshot first:
+Optional reset on startup:
 ```bash
-./zkp_server --reset-chain
+.\zkp_server.exe --reset-chain
 ```
-The server will start at:
+
+#### PostgreSQL Mode (database persistence)
+One-time database setup (Windows Command Prompt):
+```bat
+"C:\Program Files\PostgreSQL\18\bin\psql.exe" -h 127.0.0.1 -p 5432 -U postgres -d postgres -c "CREATE DATABASE ip_chain;"
+```
+Install MinGW PostgreSQL development package in MSYS2 MINGW64:
+```bash
+pacman -S --needed mingw-w64-x86_64-postgresql mingw-w64-x86_64-pkgconf
+```
+Compile with PostgreSQL enabled:
+```bash
+g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -DUSE_POSTGRESQL $(pkg-config --cflags --libs libpq) -lws2_32 -o zkp_server.exe
+```
+Configure connection in PowerShell (recommended file-based flow):
+```powershell
+Copy-Item .\postgres.local.ps1.example .\postgres.local.ps1
+# edit password in postgres.local.ps1
+.\run_postgres.ps1
+```
+Direct env-var launch (PowerShell):
+```powershell
+$env:BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=postgres"
+.\zkp_server.exe
+```
+Optional reset on startup:
+```powershell
+.\zkp_server.exe --reset-chain
+```
+
+Server URL:
 ```bash
 http://localhost:18080
 ```
@@ -328,7 +372,7 @@ Expected response:
 
 - The backend must be running for frontend features such as user registration, IP registration, and ownership verification to function correctly.
 
-- Blockchain state is persisted in `blockchain_state.json` and automatically reloaded when the server restarts.
+- Blockchain state is persisted either in `blockchain_state.json` (default) or PostgreSQL (`blocks`, `users`) and automatically reloaded when the server restarts.
 
 - The frontend dashboard includes a reset button that calls `/reset` and refreshes the displayed blockchain state.
 
@@ -344,14 +388,13 @@ Expected response:
 
 ## Limitations
 * Uses `djb2` hashing (non-cryptographic)
-* Uses a single local JSON snapshot file rather than a database or distributed storage layer
+* Persistence currently rewrites full state on each save (JSON rewrite or table refresh) instead of using append-only journaling
 * Single-node execution
 * No authentication tokens
 * Small prime numbers used for ZKP (educational purposes)
 
 ## Future Enhancements
 * Snapshot + append-only WAL storage
-* Database-backed storage (SQLite / RocksDB)
 * Cryptographically secure hash functions (SHA-256)
 * Digital signatures for request authentication
 * Distributed peer-to-peer consensus

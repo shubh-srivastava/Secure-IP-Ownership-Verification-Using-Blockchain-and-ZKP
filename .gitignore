@@ -12,4 +12,5 @@ zkp_server.exe
 
 blockchain_state.json
 zkp_details.md
+postgres.local.ps1
 

@@ -15,6 +15,8 @@ private:
     vector<Block> chain;
     unordered_map<unsigned long, string> ipRegistry;
     unordered_map<string, User> users;
+    bool postgresEnabled;
+    string postgresConnInfo;
 
     unsigned long computeBlockHash(const Block &b) const;
     int computeChallenge(int commitment, int publicKey,
@@ -22,8 +24,13 @@ private:
                          const string &creatorID) const;
     void initializeGenesis();
     void rebuildIPRegistry();
+    void configureStorage();
     bool loadState();
     bool saveState() const;
+    bool loadStateFromJSON();
+    bool saveStateToJSON() const;
+    bool loadStateFromPostgres();
+    bool saveStateToPostgres() const;
 
 public:
     static constexpr int P = 7057;
