@@ -280,11 +280,11 @@ g++.exe server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp
 ```
 Run:
 ```bash
-.\zkp_server.exe
+./zkp_server.exe
 ```
 Optional reset on startup:
 ```bash
-.\zkp_server.exe --reset-chain
+./zkp_server.exe --reset-chain
 ```
 
 #### PostgreSQL Mode (database persistence)
@@ -304,16 +304,16 @@ Configure connection in PowerShell (recommended file-based flow):
 ```powershell
 Copy-Item .\postgres.local.ps1.example .\postgres.local.ps1
 # edit password in postgres.local.ps1
-.\run_postgres.ps1
+./run_postgres.ps1
 ```
 Direct env-var launch (PowerShell):
 ```powershell
 $env:BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=<your-passowrd>"
-.\zkp_server.exe
+./zkp_server.exe
 ```
 Optional reset on startup:
 ```powershell
-.\zkp_server.exe --reset-chain
+./zkp_server.exe --reset-chain
 ```
 
 Server URL:
