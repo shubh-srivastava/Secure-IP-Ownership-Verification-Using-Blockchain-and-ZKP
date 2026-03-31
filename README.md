@@ -276,7 +276,7 @@ If running in Linux environment, remove `-lws2_32` from compile commands.
 #### JSON Mode (file persistence)
 Compile without `-DUSE_POSTGRESQL`:
 ```bash
-C:\msys64\mingw64\bin\g++.exe server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server.exe
+g++.exe server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server.exe
 ```
 Run:
 ```bash
@@ -308,7 +308,7 @@ Copy-Item .\postgres.local.ps1.example .\postgres.local.ps1
 ```
 Direct env-var launch (PowerShell):
 ```powershell
-$env:BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=postgres"
+$env:BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=<your-passowrd>"
 .\zkp_server.exe
 ```
 Optional reset on startup:
