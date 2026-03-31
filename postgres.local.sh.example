@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Copy this file to `postgres.local.sh` and update credentials.
+# `postgres.local.sh` should be git-ignored.
+
+export BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=REPLACE_ME"

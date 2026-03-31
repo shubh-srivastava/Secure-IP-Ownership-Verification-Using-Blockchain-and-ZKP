@@ -269,52 +269,121 @@ The frontend transforms the system from a backend prototype into a **fully demon
   - If using **MSYS2 MinGW g++**: install `mingw-w64-x86_64-postgresql` from MSYS2
   - If using **MSVC**: use the PostgreSQL Windows installation `libpq`
 
-### Backend Run Modes (Windows)
+### Backend Run Modes (Windows / MSYS2)
 
-If running in Linux environment, remove `-lws2_32` from compile commands.
+If running on Linux, remove `-lws2_32` from compile commands.
 
-#### JSON Mode (file persistence)
-Compile without `-DUSE_POSTGRESQL`:
+Order of operations:
+1. Choose storage mode first (JSON or PostgreSQL).
+2. Compile `zkp_server.exe` for that mode.
+3. If PostgreSQL mode: ensure DB exists and connection config is set.
+4. Start the server.
+
+#### Mode A: JSON (file persistence, simplest)
+First-time setup and run:
 ```bash
-g++.exe server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server.exe
+g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -lws2_32 -o zkp_server.exe
+./zkp_server.exe
 ```
-Run:
+
+Every next run:
 ```bash
 ./zkp_server.exe
 ```
-Optional reset on startup:
+
+Reset to genesis at startup:
 ```bash
 ./zkp_server.exe --reset-chain
 ```
 
-#### PostgreSQL Mode (database persistence)
-One-time database setup (Windows Command Prompt):
+#### Mode B: PostgreSQL (database persistence)
+Step 1 (one-time): create database:
 ```bat
 "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h 127.0.0.1 -p 5432 -U postgres -d postgres -c "CREATE DATABASE ip_chain;"
 ```
-Install MinGW PostgreSQL development package in MSYS2 MINGW64:
+
+Step 2 (one-time for MSYS2 MinGW64 builds): install libpq dev package:
 ```bash
 pacman -S --needed mingw-w64-x86_64-postgresql mingw-w64-x86_64-pkgconf
 ```
-Compile with PostgreSQL enabled:
+
+Step 3: compile with PostgreSQL enabled:
 ```bash
 g++ server.cpp blockchain.cpp crypto.cpp user.cpp -std=c++17 -DUSE_POSTGRESQL $(pkg-config --cflags --libs libpq) -lws2_32 -o zkp_server.exe
 ```
-Configure connection in PowerShell (recommended file-based flow):
+
+Step 4: create local connection config file (choose based on shell):
+
+PowerShell (`powershell` / `pwsh`):
 ```powershell
 Copy-Item .\postgres.local.ps1.example .\postgres.local.ps1
 # edit password in postgres.local.ps1
+```
+
+MSYS2 MINGW64 (`bash`):
+```bash
+cp ./postgres.local.sh.example ./postgres.local.sh
+# edit password in postgres.local.sh
+```
+
+Important:
+- PowerShell syntax and Bash syntax are different.
+- Use `$env:...` only in PowerShell.
+- Use `export ...` only in Bash/MSYS2.
+
+Step 5: start server using launcher (recommended):
+
+PowerShell:
+```powershell
 ./run_postgres.ps1
 ```
-Direct env-var launch (PowerShell):
+
+MSYS2 MINGW64:
+```bash
+bash ./run_postgres.sh
+```
+
+Reset to genesis at startup (through launchers):
+
+PowerShell:
 ```powershell
-$env:BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=<your-passowrd>"
+./run_postgres.ps1 --reset-chain
+```
+
+MSYS2 MINGW64:
+```bash
+bash ./run_postgres.sh --reset-chain
+```
+
+Direct launch without launcher:
+
+PowerShell:
+```powershell
+$env:BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=<your-password>"
 ./zkp_server.exe
 ```
-Optional reset on startup:
-```powershell
-./zkp_server.exe --reset-chain
+
+MSYS2 MINGW64:
+```bash
+export BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=<your-password>"
+./zkp_server.exe
 ```
+
+MSYS2 MINGW64 (using your local config file):
+```bash
+source ./postgres.local.sh
+./zkp_server.exe
+```
+
+MSYS2 one-line direct launch:
+```bash
+BLOCKCHAIN_POSTGRES_CONNINFO="host=127.0.0.1 port=5432 dbname=ip_chain user=postgres password=<your-password>" ./zkp_server.exe
+```
+
+File roles:
+- `postgres.local.ps1.example` and `postgres.local.sh.example`: templates for connection config.
+- `postgres.local.ps1` and `postgres.local.sh`: local git-ignored config with your real password.
+- `run_postgres.ps1` and `run_postgres.sh`: load config, validate env var, then run `zkp_server.exe`.
 
 Server URL:
 ```bash

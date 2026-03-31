@@ -1,3 +1,4 @@
+# PowerShell config template.
 # Copy this file to `postgres.local.ps1` and update credentials.
 # `postgres.local.ps1` is git-ignored.
 
